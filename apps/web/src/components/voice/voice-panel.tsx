@@ -11,6 +11,7 @@ interface VoicePanelProps {
   connected: boolean;
   muted: boolean;
   participants: VoiceParticipant[];
+  error?: string | null;
   onToggleMute: () => void;
   onLeave: () => Promise<void>;
 }
@@ -20,6 +21,7 @@ export function VoicePanel({
   connected,
   muted,
   participants,
+  error,
   onToggleMute,
   onLeave,
 }: VoicePanelProps) {
@@ -40,6 +42,7 @@ export function VoicePanel({
             <p className="mt-1 text-sm text-muted-foreground">
               Mesh WebRTC is fine for small rooms. Production should move to an SFU.
             </p>
+            {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
           </div>
 
           {connected ? (
@@ -76,4 +79,3 @@ export function VoicePanel({
     </div>
   );
 }
-

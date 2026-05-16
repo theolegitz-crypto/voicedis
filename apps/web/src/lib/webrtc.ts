@@ -1,6 +1,9 @@
 type RemoteStreamHandler = (userId: string, stream: MediaStream) => void;
 type IceCandidateHandler = (targetUserId: string, candidate: RTCIceCandidateInit) => void;
 
+const MICROPHONE_UNAVAILABLE_MESSAGE =
+  'Microphone access is unavailable. Open the app over HTTPS and allow microphone permission.';
+
 export class WebRtcMeshManager {
   private peers = new Map<string, RTCPeerConnection>();
   private localStream: MediaStream | null = null;
@@ -12,6 +15,14 @@ export class WebRtcMeshManager {
 
   async ensureLocalStream() {
     if (!this.localStream) {
+      if (
+        typeof navigator === 'undefined' ||
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== 'function'
+      ) {
+        throw new Error(MICROPHONE_UNAVAILABLE_MESSAGE);
+      }
+
       this.localStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
@@ -131,4 +142,3 @@ function getIceServers() {
       : []),
   ];
 }
-

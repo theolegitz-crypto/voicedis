@@ -70,6 +70,7 @@ export function AppShell({ serverId, channelId }: AppShellProps) {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const webRtcRef = useRef<WebRtcMeshManager | null>(null);
   const typingTimeouts = useRef<Map<string, number>>(new Map());
@@ -423,25 +424,31 @@ export function AppShell({ serverId, channelId }: AppShellProps) {
       await handleLeaveVoice();
     }
 
-    const response = await apiFetch<VoiceJoinResponse>(`/voice/channels/${voiceChannelId}/join`, {
-      method: 'POST',
-      token,
-    });
+    setVoiceError(null);
 
-    await webRtcRef.current?.ensureLocalStream();
-    const seedParticipants = response.participants.map((participant) => ({
-      user: participant.user,
-      muted: participant.muted,
-    }));
+    try {
+      const response = await apiFetch<VoiceJoinResponse>(`/voice/channels/${voiceChannelId}/join`, {
+        method: 'POST',
+        token,
+      });
 
-    setActiveVoice(
-      voiceChannelId,
-      seedParticipants.some((participant) => participant.user.id === user.id)
-        ? seedParticipants
-        : [...seedParticipants, { user, muted: false }],
-    );
+      await webRtcRef.current?.ensureLocalStream();
+      const seedParticipants = response.participants.map((participant) => ({
+        user: participant.user,
+        muted: participant.muted,
+      }));
 
-    socketRef.current.emit('voice:join', { channelId: voiceChannelId });
+      setActiveVoice(
+        voiceChannelId,
+        seedParticipants.some((participant) => participant.user.id === user.id)
+          ? seedParticipants
+          : [...seedParticipants, { user, muted: false }],
+      );
+
+      socketRef.current.emit('voice:join', { channelId: voiceChannelId });
+    } catch (error) {
+      setVoiceError(error instanceof Error ? error.message : 'Unable to join voice right now.');
+    }
   };
 
   const handleLeaveVoice = async () => {
@@ -456,6 +463,7 @@ export function AppShell({ serverId, channelId }: AppShellProps) {
     socketRef.current?.emit('voice:leave', { channelId: activeVoiceChannelId });
     webRtcRef.current?.cleanup();
     setRemoteStreams({});
+    setVoiceError(null);
     clearVoice();
   };
 
@@ -521,6 +529,7 @@ export function AppShell({ serverId, channelId }: AppShellProps) {
             connected={voiceConnected}
             muted={muted}
             participants={participants}
+            error={voiceError}
             onToggleMute={handleToggleMute}
             onLeave={handleLeaveVoice}
           />

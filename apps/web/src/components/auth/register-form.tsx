@@ -58,6 +58,9 @@ export function RegisterForm() {
           onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
           placeholder="Username"
         />
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Use 3-20 lowercase letters, numbers, or underscores.
+        </p>
         <Input
           value={form.displayName}
           onChange={(event) =>
@@ -71,6 +74,9 @@ export function RegisterForm() {
           onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
           placeholder="Password"
         />
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Password must be 8-72 characters.
+        </p>
         <Input
           value={form.avatarUrl}
           onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
@@ -91,4 +97,3 @@ export function RegisterForm() {
     </Card>
   );
 }
-

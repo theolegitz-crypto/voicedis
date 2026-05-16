@@ -1,8 +1,8 @@
 export class ApiError extends Error {
   status: number;
 
-  constructor(message: string, status: number) {
-    super(message);
+  constructor(message: string | string[], status: number) {
+    super(Array.isArray(message) ? message.join(', ') : message);
     this.name = 'ApiError';
     this.status = status;
   }
@@ -31,10 +31,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    const payload = (await response.json().catch(() => null)) as { message?: string | string[] } | null;
     throw new ApiError(payload?.message ?? 'Request failed', response.status);
   }
 
   return (await response.json()) as T;
 }
-

@@ -9,12 +9,16 @@ import { AuthService } from './auth.service';
     ConfigModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') ?? 'change_me',
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '7d',
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN') ?? '7d';
+
+        return {
+          secret: configService.get<string>('JWT_SECRET') ?? 'change_me',
+          signOptions: {
+            expiresIn: expiresIn as unknown as number,
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
@@ -22,4 +26,3 @@ import { AuthService } from './auth.service';
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
-

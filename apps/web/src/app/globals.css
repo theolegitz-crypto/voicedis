@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Segoe UI Variable";
+  --background: 222 47% 8%;
+  --foreground: 220 18% 94%;
+  --muted: 220 24% 16%;
+  --muted-foreground: 220 12% 64%;
+  --accent: 217 32% 18%;
+  --accent-foreground: 220 18% 94%;
+  --card: 221 39% 11%;
+  --border: 217 24% 20%;
+  --input: 217 24% 20%;
+  --primary: 203 89% 58%;
+  --primary-foreground: 220 18% 98%;
+  --danger: 356 78% 57%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 30%),
+    linear-gradient(180deg, #09111e 0%, #050913 100%);
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+}
+

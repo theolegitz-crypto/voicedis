@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  IDLE
+  DND
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+}
+
+enum ServerMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum VoiceSessionStatus {
+  ACTIVE
+  LEFT
+}
+
+enum AttachmentType {
+  IMAGE
+  FILE
+  AUDIO
+  VIDEO
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  username            String               @unique
+  displayName         String
+  avatarUrl           String?
+  passwordHash        String
+  status              UserStatus           @default(OFFLINE)
+  memberships         ServerMember[]
+  ownedServers        Server[]             @relation("ServerOwner")
+  messages            Message[]
+  createdInvites      Invite[]             @relation("InviteCreator")
+  directConversations DirectConversation[] @relation("ConversationParticipants")
+  sentDirectMessages  DirectMessage[]      @relation("DirectMessageSender")
+  voiceSessions       VoiceSession[]
+  createdChannels     Channel[]            @relation("ChannelCreator")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model Server {
+  id        String         @id @default(cuid())
+  name      String
+  iconUrl   String?
+  ownerId   String
+  owner     User           @relation("ServerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members   ServerMember[]
+  roles     Role[]
+  channels  Channel[]
+  invites   Invite[]
+  messages  Message[]
+  voiceSessions VoiceSession[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model ServerMember {
+  id           String           @id @default(cuid())
+  serverId     String
+  userId       String
+  role         ServerMemberRole @default(MEMBER)
+  customRoleId String?
+  server       Server           @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customRole   Role?            @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
+  joinedAt     DateTime         @default(now())
+
+  @@unique([serverId, userId])
+  @@index([userId])
+}
+
+model Role {
+  id          String         @id @default(cuid())
+  serverId    String
+  name        String
+  color       String?
+  permissions Int            @default(0)
+  position    Int            @default(0)
+  server      Server         @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  members     ServerMember[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Channel {
+  id           String         @id @default(cuid())
+  serverId     String
+  name         String
+  description  String?
+  type         ChannelType
+  position     Int            @default(0)
+  createdById  String
+  server       Server         @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdBy    User           @relation("ChannelCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  messages     Message[]
+  voiceSessions VoiceSession[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([serverId, type, position])
+}
+
+model Message {
+  id          String              @id @default(cuid())
+  content     String              @db.Text
+  authorId    String
+  channelId   String
+  serverId    String
+  author      User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  channel     Channel             @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  server      Server              @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  attachments MessageAttachment[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+
+  @@index([channelId, createdAt])
+}
+
+model MessageAttachment {
+  id        String         @id @default(cuid())
+  messageId String
+  url       String
+  fileName  String
+  mimeType  String
+  size      Int
+  type      AttachmentType
+  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  serverId    String
+  createdById String
+  expiresAt   DateTime?
+  maxUses     Int?
+  uses        Int       @default(0)
+  server      Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model DirectConversation {
+  id           String          @id @default(cuid())
+  participants User[]          @relation("ConversationParticipants")
+  messages     DirectMessage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model DirectMessage {
+  id             String             @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String             @db.Text
+  conversation   DirectConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User               @relation("DirectMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+
+  @@index([conversationId, createdAt])
+}
+
+model VoiceSession {
+  id        String             @id @default(cuid())
+  channelId String
+  serverId  String
+  userId    String
+  socketId  String?
+  muted     Boolean            @default(false)
+  status    VoiceSessionStatus @default(ACTIVE)
+  channel   Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  server    Server             @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime           @default(now())
+  leftAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([channelId, status])
+  @@index([userId, status])
+}

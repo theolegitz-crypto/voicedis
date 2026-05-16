@@ -1,0 +1,14 @@
+{
+  "name": "discord-clone-mvp",
+  "private": true,
+  "scripts": {
+    "api:dev": "npm --prefix apps/api run start:dev",
+    "web:dev": "npm --prefix apps/web run dev",
+    "api:prisma:generate": "npm --prefix apps/api run prisma:generate",
+    "api:prisma:migrate": "npm --prefix apps/api run prisma:migrate",
+    "api:prisma:seed": "npm --prefix apps/api run prisma:seed",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down -v"
+  }
+}
+

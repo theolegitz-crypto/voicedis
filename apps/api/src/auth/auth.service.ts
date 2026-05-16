@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserStatus } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { safeUserSelect } from '../common/selects';
 import { LoginDto } from './dto/login.dto';
@@ -110,4 +110,3 @@ export class AuthService {
     return this.jwtService.signAsync(payload);
   }
 }
-
